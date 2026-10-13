@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Midterm Exam</title>
+
+    <style>
+        body {
+            text-align: center;
+            font-family: Arial, sans-serif;
+        }
+
+        input {
+            padding: 8px;
+        }
+
+        button {
+            padding: 8px 15px;
+        }
+
+        table {
+            margin: 20px auto;
+            border-collapse: collapse;
+            width: 500px;
+        }
+
+        th,
+        td {
+            border: 1px solid black;
+            padding: 10px;
+        }
+
+        th {
+            background-color: lightgray;
+        }
+    </style>
+</head>
+<body>
+    <h1>Campus Parking Management System</h1>
+
+    <h2>Add New Vehicle</h2>
+
+    <input type="text" id="plate_number" placeholder="plate_number">
+    <input type="text" id="owner" placeholder="owner">
+    <input type="text" id="vehicle_type" placeholder="vehicle_type">
+    <input type="text" id="color" placeholder="color">
+
+    <button onclick="addVehicle()">Add Vehicle</button>
+    
+    <input type="number" id="SearchID" placeholder="Enter ID">
+    <button onclick="searchVehicles()">Search</button>
+    <button onclick="loadVehicles()">Show All</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Plate Number</th>
+                <th>Owner</th>
+                <th>Vehicle type</th>
+                <th>Color</th>
+            </tr>
+        </thead>
+
+        <tbody id="vehicleTable"></tbody>
+    </table>
+
+    <script>
+        async function loadVehicles() {
+            const response = await fetch("/api/vehicles");
+            const vehicles = await response.json();
+
+            displayVehicles(vehicles)
+        }
+
+        async function searchVehicles() {
+            const id = document.getElementById("SearchID").value;
+
+            if (id === "") {
+                loadVehicles();
+                return;
+            }
+
+            const response = await fetch("api/vehicles/" + id);
+
+            if (!response.ok) {
+                const table = document.getElementById("vehicleTable");
+
+                table.innerHTML = 
+                    "<tr><td colspan='3'>Vehicle not found</td></tr>";
+                return;
+            }
+
+            const vehicle = await response.json();
+
+            displayVehicles([vehicle]);
+        }
+
+        function displayVehicles(vehicles) {
+            const table = document.getElementById("vehicleTable");
+
+            table.innerHTML = "";
+            vehicles.forEach(vehicle => {
+                const row = document.createElement("tr");
+                row.innerHTML = 
+                    "<td>" + vehicle.id + "</td>"
+                    "<td>" + vehicle.plate_number + "</td>"
+                    "<td>" + vehicle.owner + "</td>"
+                    "<td>" + vehicle.vehicle_type + "</td>"
+                    "<td>" + vehicle.color + "</td>"
+                table.appendChild(row);
+            });
+        }
+
+        async function addVehicle() {
+            const plate_number = document.getElementById("plate_number").value;
+            const owner = document.getElementById("owner").value;
+            const vehicle_type = document.getElementById("vehicle_type").value;
+            const color = document.getElementById("color").value;
+
+            const response = await fetch("/api/vehicles", {
+                method: "POST",
+
+                
+                headers: {
+                    "Content-Type": "application/json"
+                },
+
+                body: JSON.stringify({
+                    plate_number: plate_number,
+                    owner: owner,
+                    vehicle_type: vehicle_type,
+                    color: color
+                })
+            });
+
+            const result = await response.json();
+
+            const message = document.getElementById("message");
+
+            if (!response.ok) {
+                message.textContent = result.message;
+                return;
+            }
+
+            message.textContent = "Vehicle added successfully";
+        }
+
+        loadVehicles();
+    </script>
+</body>
+</html>
